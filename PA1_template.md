@@ -10,7 +10,8 @@ output:
 
 Confirm the CSV file is present in the working directory. If it isn't, unzip the supplied file from the forked repository.
 
-```{r}
+
+```r
 FileName <- "activity.csv"
 ZipFile <- "activity.zip"
 
@@ -23,7 +24,8 @@ if (!file.exists(FileName)) {
 
 Load the source dataset.
 
-```{r}
+
+```r
 df1 <- read.csv(FileName)
 ```
 
@@ -31,7 +33,8 @@ Convert `date` to Date class.
 
 Create `minute` from `interval`, where there are 1,440 minutes in a 24 hour day.
 
-```{r}
+
+```r
 # convert interval to a value in minutes
 x <- df1$interval
 # zero-buffer the front and coerce interval value to character
@@ -48,15 +51,34 @@ df1 <- transform(df1,
 
 Load the packages used in this assignment.
 
-```{r results="hide"}
+
+```r
 library(ggplot2)
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
 ```
 
 
 ## What is mean total number of steps taken per day?
 
-```{r figure1}
+
+```r
 # total number of steps taken per day
 stepsDaySum <- df1 %>% 
         group_by(date) %>% 
@@ -68,17 +90,22 @@ ggplot(stepsDaySum, aes(date, stepsSum)) +
         geom_col(width = 1, fill = "darkgreen", 
                  position = "identity", na.rm = TRUE) + 
         labs(x = "", y = "Steps", title = "Daily Step Count")
+```
 
+![](PA1_template_files/figure-html/figure1-1.png)<!-- -->
+
+```r
 # mean and median of the total number of steps taken per day
 stepsSummary <- summary(stepsDaySum$stepsSum)
 ```
 
-The total number of steps taken per day from `r format(min(stepsDaySum$date), "%B %d, %Y")` to `r format(max(stepsDaySum$date), "%B %d, %Y")`, for the `r count(stepsDaySum)[[1]]-stepsSummary[7]` days with data recorded, have a median of `r format(stepsSummary[3], big.mark = ",")`, and a mean of `r format(stepsSummary[4], big.mark = ",")`. The other `r stepsSummary[7]` days during this period had no data recorded.
+The total number of steps taken per day from October 01, 2012 to November 30, 2012, for the 53 days with data recorded, have a median of 10,765, and a mean of 10,766.19. The other 8 days during this period had no data recorded.
 
 
 ## What is the average daily activity pattern?
 
-```{r figure2}
+
+```r
 # average number of steps for each 5-minute interval of the day
 steps5minAvg <- df1 %>% 
         group_by(minute) %>% 
@@ -92,24 +119,29 @@ ggplot(steps5minAvg, aes(minute, stepsAvg)) +
         labs(x = "Minutes of a 24-hour day", 
              y = "Average number of steps",
              title = "5-Minute Intervals Averaged Over Days Reported")
+```
 
+![](PA1_template_files/figure-html/figure2-1.png)<!-- -->
+
+```r
 # identify the 5-minute interval with the most steps
 steps5minMax <- subset(steps5minAvg, 
                        steps5minAvg$stepsAvg == max(steps5minAvg$stepsAvg))
 ```
 
-The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is interval "`r steps5minMax$interval`".
+The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is interval "835".
 
-To interpret the `interval` variable, add zeros to front of the value to make it four digits long. In this case, that would be `r substring(paste0("000", steps5minMax$interval), nchar(paste0("000", steps5minMax$interval))-3)`. The first 2 digits represent the hour and the last 2 digits represent the minute.
+To interpret the `interval` variable, add zeros to front of the value to make it four digits long. In this case, that would be 0835. The first 2 digits represent the hour and the last 2 digits represent the minute.
 
-In the above figure, the "`r steps5minMax$interval`" interval is at the equivalent `r steps5minMax$minute`-minute mark - the high point on the figure above - with an average value of `r round(steps5minMax$stepsAvg, 1)` steps.
+In the above figure, the "835" interval is at the equivalent 515-minute mark - the high point on the figure above - with an average value of 206.2 steps.
 
 
 ## Imputing missing values
 
-There are `r format(sum(is.na(df1)), big.mark = ",")` missing values in the dataset.
+There are 2,304 missing values in the dataset.
 
-```{r}
+
+```r
 # list the dates with NAs and the frequency within each
 naDays <- df1 %>% 
         filter(is.na(df1)) %>% 
@@ -120,9 +152,22 @@ naDays <- as.data.frame(naDays)
 naDays
 ```
 
+```
+##         date countOfNAs
+## 1 2012-10-01        288
+## 2 2012-10-08        288
+## 3 2012-11-01        288
+## 4 2012-11-04        288
+## 5 2012-11-09        288
+## 6 2012-11-10        288
+## 7 2012-11-14        288
+## 8 2012-11-30        288
+```
+
 Since the missing values are complete days - each day has 288 intervals of 5 minutes each - of missing data, it makes sense to impute values to each 5-minute interval based on the mean of the same interval as calculated from the other days.
 
-```{r}
+
+```r
 # copy the dataset
 df2 <- df1
 
@@ -135,7 +180,8 @@ for (i in 1:nrow(naDays)) {
 
 Missing values have been imputed.
 
-```{r figure3}
+
+```r
 # with the imputed values...
 # total number of steps taken per day
 stepsDaySum2 <- df2 %>% 
@@ -149,13 +195,17 @@ ggplot(stepsDaySum2, aes(date, stepsSum)) +
                  position = "identity", na.rm = TRUE) + 
         labs(x = "", y = "Steps", 
              title = "Daily Step Count with Imputed Values")
+```
 
+![](PA1_template_files/figure-html/figure3-1.png)<!-- -->
+
+```r
 # mean and median of the total number of steps taken per day, including imputed
 # values
 stepsSummary2 <- summary(stepsDaySum2$stepsSum)
 ```
 
-The total number of steps taken per day, including imputed values, have a median of `r format(stepsSummary2[3], big.mark = ",")`, and a mean of `r format(stepsSummary2[4], big.mark = ",")`.
+The total number of steps taken per day, including imputed values, have a median of 10,766.19, and a mean of 10,766.19.
 
 Since (1) we used the mean from the 5-minute intervals, and (2) there were 8 entire days where no steps were recorded, the median has changed, but the mean has not.
 
@@ -163,20 +213,33 @@ The impact of imputing missing data using this method has set 8 more days to the
 
 Before imputing.
 
-```{r}
+
+```r
 summary(stepsDaySum$stepsSum)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##      41    8841   10765   10766   13294   21194       8
 ```
 
 After imputing.
 
-```{r}
+
+```r
 summary(stepsDaySum2$stepsSum)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10766   10766   12811   21194
 ```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r figure4}
+
+```r
 # add a factor variable that stores either "weekday" or weekend" based on the
 # date
 df2 <- df2 %>% 
@@ -201,3 +264,5 @@ ggplot(steps5minAvg2, aes(minute, stepsAvg)) +
              y = "Average number of steps",
              title = "5-Minute Intervals Averaged Over Weekdays vs. Weekends")
 ```
+
+![](PA1_template_files/figure-html/figure4-1.png)<!-- -->
